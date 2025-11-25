@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   sustainhub:
     build:
@@ -11,6 +9,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
+      - VIRTUAL_PORT=3001
+      - VIRTUAL_HOST=sustainhub.dev.tk.sg
     volumes:
       # Persist database data
       - ./data:/app/data
@@ -18,8 +18,8 @@ services:
       - ./backend/fridge.db:/app/backend/fridge.db
     restart: unless-stopped
     networks:
-      - sustainhub-network
+      devtksg: # same network that our reverse proxy is on
 
 networks:
-  sustainhub-network:
-    driver: bridge
+  devtksg:
+    external: true
