@@ -12,10 +12,8 @@ services:
       - VIRTUAL_PORT=3001
       - VIRTUAL_HOST=sustainhub.dev.tk.sg
     volumes:
-      # Persist database data
-      - ./data:/app/data
-      # Mount the database file (create it first if it doesn't exist)
-      - ./backend/fridge.db:/app/backend/fridge.db
+      # Persist database data using a named volume
+      - db-data:/app/backend
     restart: unless-stopped
     networks:
       devtksg: # same network that our reverse proxy is on
@@ -23,3 +21,6 @@ services:
 networks:
   devtksg:
     external: true
+
+volumes:
+  db-data:
