@@ -13,7 +13,7 @@ services:
       - VIRTUAL_HOST=sustainhub.dev.tk.sg
     volumes:
       # Mount database directory for persistence
-      - ./data:/app/backend
+      - ./data:/app/data
     restart: unless-stopped
     networks:
       devtksg: # same network that our reverse proxy is on

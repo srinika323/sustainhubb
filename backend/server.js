@@ -19,7 +19,8 @@ if (NODE_ENV === 'production') {
 }
 
 // Initialize SQLite database
-const db = new sqlite3.Database('./fridge.db', (err) => {
+const dbPath = process.env.NODE_ENV === 'production' ? '/app/data/fridge.db' : './fridge.db';
+const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Error opening database:', err);
   } else {
