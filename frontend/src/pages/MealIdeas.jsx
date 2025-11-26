@@ -48,6 +48,20 @@ function MealIdeas() {
     return { have, need };
   };
 
+  const getDaysText = (days) => {
+    if (days <= 0) return 'Expired/Today!';
+    if (days === 1) return '1 day';
+    return `${days} days`;
+  };
+
+  const getExpiryClass = (days) => {
+    if (days <= 0) return 'expiry-urgent';
+    if (days <= 2) return 'expiry-very-soon';
+    if (days <= 5) return 'expiry-soon';
+    if (days <= 7) return 'expiry-this-week';
+    return '';
+  };
+
   const toggleExpanded = (recipeId, e) => {
     e.stopPropagation();
     setExpandedRecipe(expandedRecipe === recipeId ? null : recipeId);
@@ -57,6 +71,7 @@ function MealIdeas() {
     <div className="meal-ideas-page">
       <div className="page-header">
         <h1 className="page-title">MEAL IDEAS</h1>
+        <p className="subtitle">Recipes prioritized by expiring ingredients</p>
       </div>
 
       <div className="meal-ideas-content">
@@ -69,15 +84,21 @@ function MealIdeas() {
             {recipes.map((recipe) => {
               const { have, need } = getIngredientStatus(recipe);
               const isExpanded = expandedRecipe === recipe.id;
+              const hasExpiringIngredients = recipe.expiringIngredientsUsed && recipe.expiringIngredientsUsed.length > 0;
 
               return (
                 <div key={recipe.id} className="recipe-card">
                   <div className="recipe-card-header">
                     <div className="recipe-info" onClick={() => navigate(`/recipe/${recipe.id}`)}>
                       <span className="recipe-name">{recipe.name}</span>
-                      {recipe.matchPercentage && (
-                        <span className="match-badge">{Math.round(recipe.matchPercentage)}%</span>
-                      )}
+                      <div className="recipe-badges">
+                        {recipe.matchPercentage && (
+                          <span className="match-badge">{Math.round(recipe.matchPercentage)}%</span>
+                        )}
+                        {hasExpiringIngredients && (
+                          <span className="expiring-badge">⚠️ Use soon!</span>
+                        )}
+                      </div>
                     </div>
                     <button
                       className="expand-button"
@@ -90,6 +111,27 @@ function MealIdeas() {
 
                   {isExpanded && (
                     <div className="recipe-card-details">
+                      {hasExpiringIngredients && (
+                        <div className="expiring-ingredients-section">
+                          <h3 className="ingredients-header expiring">
+                            ⏰ Expiring Soon:
+                          </h3>
+                          <ul className="ingredients-list expiring">
+                            {recipe.expiringIngredientsUsed.map((ing, idx) => (
+                              <li 
+                                key={idx} 
+                                className={`ingredient-item expiring ${getExpiryClass(ing.daysUntilExpiry)}`}
+                              >
+                                <span className="ingredient-name">{ing.name}</span>
+                                <span className="expiry-info">
+                                  ({getDaysText(ing.daysUntilExpiry)})
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
                       {have.length > 0 && (
                         <div className="ingredients-section">
                           <h3 className="ingredients-header have">✓ You have ({have.length}):</h3>
