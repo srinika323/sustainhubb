@@ -222,3 +222,150 @@
     font-size: 0.9rem;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Expiring Ingredients Feature - Added Styles */
+
+.subtitle {
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: -15px;
+  margin-bottom: 20px;
+}
+
+.recipe-badges {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.expiring-badge {
+  background: #ff6b6b;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.expiring-ingredients-section {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.ingredients-header.expiring {
+  color: #ff6b6b;
+  font-size: 1rem;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.ingredients-list.expiring {
+  list-style: none;
+  padding: 0;
+}
+
+.ingredient-item.expiring {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  margin: 5px 0;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.ingredient-name {
+  flex: 1;
+}
+
+.expiry-info {
+  font-size: 0.85rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Expiry urgency color coding */
+.expiry-urgent {
+  background: #ff4444;
+  color: white;
+}
+
+.expiry-urgent .expiry-info {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.expiry-very-soon {
+  background: #ff8c42;
+  color: white;
+}
+
+.expiry-very-soon .expiry-info {
+  background: rgba(255, 255, 255, 0.3);
+  color: white;
+}
+
+.expiry-soon {
+  background: #ffd93d;
+  color: #333;
+}
+
+.expiry-soon .expiry-info {
+  background: rgba(0, 0, 0, 0.1);
+  color: #333;
+}
+
+.expiry-this-week {
+  background: #a8dadc;
+  color: #1d3557;
+}
+
+.expiry-this-week .expiry-info {
+  background: rgba(0, 0, 0, 0.1);
+  color: #1d3557;
+}
+
+/* Ensure recipe cards have proper spacing */
+.recipe-card {
+  margin-bottom: 20px;
+}
+
+.recipe-info {
+  flex: 1;
+  cursor: pointer;
+}
+
+.recipe-info:hover .recipe-name {
+  color: #2c5282;
+  text-decoration: underline;
+}
