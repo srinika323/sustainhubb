@@ -168,6 +168,15 @@ function seedRecipes() {
   });
 }
 
+// Helper function to calculate days until expiry
+function getDaysUntilExpiry(expiryDate) {
+  const today = new Date();
+  const expiry = new Date(expiryDate);
+  const diffTime = expiry - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
 // ============= API Routes =============
 
 // ESP32 endpoint - Update/Add ingredients
@@ -271,15 +280,33 @@ app.get('/api/recipes', (req, res) => {
   });
 });
 
-// Get suggested recipes based on available ingredients
+// Get suggested recipes based on available ingredients - PRIORITIZING EXPIRING ITEMS
 app.get('/api/recipes/suggestions', (req, res) => {
-  db.all('SELECT DISTINCT name FROM ingredients', [], (err, availableIngredients) => {
+  // First, get all ingredients with their expiry dates
+  db.all('SELECT name, expiry_date FROM ingredients', [], (err, availableIngredients) => {
     if (err) {
       return res.status(500).json({ error: err.message });
     }
 
-    const availableNames = availableIngredients.map(i => i.name.toLowerCase());
+    // Create a map of ingredient names to their expiry info
+    const ingredientMap = {};
+    availableIngredients.forEach(ingredient => {
+      const ingredientName = ingredient.name.toLowerCase();
+      const daysUntilExpiry = getDaysUntilExpiry(ingredient.expiry_date);
+      
+      // Store the shortest expiry time if ingredient appears multiple times
+      if (!ingredientMap[ingredientName] || daysUntilExpiry < ingredientMap[ingredientName].daysUntilExpiry) {
+        ingredientMap[ingredientName] = {
+          name: ingredient.name,
+          expiryDate: ingredient.expiry_date,
+          daysUntilExpiry: daysUntilExpiry
+        };
+      }
+    });
 
+    const availableNames = Object.keys(ingredientMap);
+
+    // Get all recipes
     db.all('SELECT * FROM recipes', [], (err, recipes) => {
       if (err) {
         return res.status(500).json({ error: err.message });
@@ -291,22 +318,67 @@ app.get('/api/recipes/suggestions', (req, res) => {
             'SELECT ingredient_name, quantity FROM recipe_ingredients WHERE recipe_id = ?',
             [recipe.id],
             (err, ingredients) => {
-              if (err) reject(err);
-              else {
-                const recipeIngredientNames = ingredients.map(i => i.ingredient_name.toLowerCase());
-                const matchCount = recipeIngredientNames.filter(name =>
-                  availableNames.includes(name)
-                ).length;
-                const matchPercentage = (matchCount / recipeIngredientNames.length) * 100;
-
-                resolve({
-                  ...recipe,
-                  ingredients,
-                  matchPercentage,
-                  matchCount,
-                  totalIngredients: recipeIngredientNames.length
-                });
+              if (err) {
+                reject(err);
+                return;
               }
+
+              const recipeIngredientNames = ingredients.map(i => i.ingredient_name.toLowerCase());
+              
+              // Calculate match statistics
+              let matchCount = 0;
+              let expiringIngredientsUsed = [];
+              let totalExpiryScore = 0;
+              
+              recipeIngredientNames.forEach(name => {
+                if (availableNames.includes(name)) {
+                  matchCount++;
+                  const ingredientInfo = ingredientMap[name];
+                  
+                  // Calculate expiry urgency score (lower days = higher priority)
+                  // Items expiring in 0-2 days get highest score
+                  let expiryScore = 0;
+                  if (ingredientInfo.daysUntilExpiry <= 0) {
+                    expiryScore = 100; // Expired or expiring today
+                  } else if (ingredientInfo.daysUntilExpiry <= 2) {
+                    expiryScore = 90; // Expiring very soon
+                  } else if (ingredientInfo.daysUntilExpiry <= 5) {
+                    expiryScore = 70; // Expiring soon
+                  } else if (ingredientInfo.daysUntilExpiry <= 7) {
+                    expiryScore = 50; // Expiring this week
+                  } else {
+                    expiryScore = 20; // Not urgent
+                  }
+                  
+                  totalExpiryScore += expiryScore;
+                  
+                  if (ingredientInfo.daysUntilExpiry <= 7) {
+                    expiringIngredientsUsed.push({
+                      name: ingredientInfo.name,
+                      daysUntilExpiry: ingredientInfo.daysUntilExpiry,
+                      expiryDate: ingredientInfo.expiryDate
+                    });
+                  }
+                }
+              });
+
+              const matchPercentage = (matchCount / recipeIngredientNames.length) * 100;
+              
+              // Calculate priority score (combining match % and expiry urgency)
+              // Recipes with expiring ingredients get boosted priority
+              const avgExpiryScore = matchCount > 0 ? totalExpiryScore / matchCount : 0;
+              const priorityScore = (matchPercentage * 0.6) + (avgExpiryScore * 0.4);
+
+              resolve({
+                ...recipe,
+                ingredients,
+                matchPercentage,
+                matchCount,
+                totalIngredients: recipeIngredientNames.length,
+                expiringIngredientsUsed,
+                priorityScore,
+                avgExpiryScore
+              });
             }
           );
         });
@@ -315,8 +387,16 @@ app.get('/api/recipes/suggestions', (req, res) => {
       Promise.all(recipePromises)
         .then(recipesWithMatches => {
           const suggestedRecipes = recipesWithMatches
-            .filter(r => r.matchPercentage >= 50)
-            .sort((a, b) => b.matchPercentage - a.matchPercentage);
+            .filter(r => r.matchPercentage >= 50) // Must have at least 50% ingredients available
+            .sort((a, b) => {
+              // First sort by priority score (considers both match % and expiry urgency)
+              if (Math.abs(b.priorityScore - a.priorityScore) > 5) {
+                return b.priorityScore - a.priorityScore;
+              }
+              // If priority scores are similar, prefer recipes with more expiring ingredients
+              return b.expiringIngredientsUsed.length - a.expiringIngredientsUsed.length;
+            });
+          
           res.json(suggestedRecipes);
         })
         .catch(err => res.status(500).json({ error: err.message }));
