@@ -387,7 +387,7 @@ app.get('/api/recipes/suggestions', (req, res) => {
       Promise.all(recipePromises)
         .then(recipesWithMatches => {
           const suggestedRecipes = recipesWithMatches
-            .filter(r => r.matchPercentage >= 50) // Must have at least 50% ingredients available
+            .filter(r => r.matchCount > 0) // Must have at least 50% ingredients available
             .sort((a, b) => {
               // First sort by priority score (considers both match % and expiry urgency)
               if (Math.abs(b.priorityScore - a.priorityScore) > 5) {
