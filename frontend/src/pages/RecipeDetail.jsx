@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import './RecipeDetail.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 function RecipeDetail() {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -17,8 +19,8 @@ function RecipeDetail() {
   const fetchData = async () => {
     try {
       const [recipeResponse, ingredientsResponse] = await Promise.all([
-        axios.get(`http://localhost:3001/api/recipes/${id}`),
-        axios.get('http://localhost:3001/api/ingredients')
+        axios.get(`${API_URL}/api/recipes/${id}`),
+        axios.get(`${API_URL}/api/ingredients`)
       ]);
 
       setRecipe(recipeResponse.data);

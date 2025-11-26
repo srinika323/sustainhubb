@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './ScanReceipt.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 function ScanReceipt() {
   const navigate = useNavigate();
   const [receiptImage, setReceiptImage] = useState(null);
@@ -156,7 +158,7 @@ Do not include any other text or explanation.`
 
     try {
       for (const item of selectedItems) {
-        await axios.post('http://localhost:3001/api/ingredients', {
+        await axios.post(`${API_URL}/api/ingredients`, {
           name: item.name,
           category: 'grocery',
           quantity: item.quantity,

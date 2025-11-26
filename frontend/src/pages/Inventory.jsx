@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Inventory.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 function Inventory() {
   const navigate = useNavigate();
   const [ingredients, setIngredients] = useState([]);
@@ -14,7 +16,7 @@ function Inventory() {
 
   const fetchIngredients = async () => {
     try {
-      const response = await axios.get('http://localhost:3001/api/ingredients');
+      const response = await axios.get(`${API_URL}/api/ingredients`);
       setIngredients(response.data);
       setLoading(false);
     } catch (error) {
@@ -59,7 +61,7 @@ function Inventory() {
     const formattedExpiry = expiryDate.toISOString().split('T')[0];
 
     try {
-      await axios.post('http://localhost:3001/api/ingredients', {
+      await axios.post(`${API_URL}/api/ingredients`, {
         name: randomName,
         category: randomCategory,
         quantity: randomQuantity,
@@ -83,7 +85,7 @@ function Inventory() {
     const randomIngredient = ingredients[randomIndex];
 
     try {
-      await axios.delete(`http://localhost:3001/api/ingredients/${randomIngredient.id}`);
+      await axios.delete(`${API_URL}/api/ingredients/${randomIngredient.id}`);
       fetchIngredients(); // Refresh the list
     } catch (error) {
       console.error('Error deleting random ingredient:', error);

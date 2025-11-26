@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './MealIdeas.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 function MealIdeas() {
   const navigate = useNavigate();
   const [recipes, setRecipes] = useState([]);
@@ -17,8 +19,8 @@ function MealIdeas() {
   const fetchData = async () => {
     try {
       const [recipesResponse, ingredientsResponse] = await Promise.all([
-        axios.get('http://localhost:3001/api/recipes/suggestions'),
-        axios.get('http://localhost:3001/api/ingredients')
+        axios.get(`${API_URL}/api/recipes/suggestions`),
+        axios.get(`${API_URL}/api/ingredients`)
       ]);
 
       setRecipes(recipesResponse.data);
